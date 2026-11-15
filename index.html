@@ -737,6 +737,122 @@ footer p {
     text-align: left;
   }
 }
+
+
+/* ===== CHECKOUT FORM ===== */
+.checkout-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(20, 12, 8, .78);
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+}
+.checkout-overlay.show { display: flex; }
+.checkout-box {
+  width: min(100%, 520px);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--cream);
+  color: var(--dark);
+  padding: 30px;
+  position: relative;
+  box-shadow: 0 15px 50px #0005;
+  border: 1px solid var(--gold);
+}
+.checkout-box h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 38px;
+  margin-bottom: 6px;
+}
+.checkout-subtitle {
+  color: #806d5e;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.checkout-close {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--dark);
+  width: 34px;
+  height: 34px;
+  font-size: 21px;
+}
+.checkout-items {
+  background: #eadbc8;
+  padding: 13px;
+  margin-bottom: 18px;
+  font-size: 12px;
+  line-height: 1.9;
+  max-height: 125px;
+  overflow-y: auto;
+}
+.checkout-total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  color: var(--brown);
+  padding: 10px 0 17px;
+  border-bottom: 1px solid var(--beige);
+  margin-bottom: 17px;
+}
+.checkout-form label {
+  display: block;
+  font-size: 12px;
+  margin: 12px 0 6px;
+  color: var(--brown);
+}
+.checkout-form input,
+.checkout-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--beige);
+  background: #fffaf3;
+  color: var(--dark);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.checkout-form input:focus,
+.checkout-form textarea:focus { border-color: var(--gold); }
+.checkout-form textarea {
+  min-height: 85px;
+  resize: vertical;
+}
+.checkout-submit {
+  width: 100%;
+  padding: 14px;
+  margin-top: 18px;
+  background: var(--dark);
+  color: var(--cream);
+  border: 1px solid var(--dark);
+  letter-spacing: 1px;
+  font-size: 12px;
+}
+.checkout-submit:hover { background: var(--gold); color: var(--dark); }
+.checkout-submit:disabled { opacity: .6; cursor: wait; }
+.checkout-message {
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 12px;
+  text-align: center;
+}
+.checkout-note {
+  color: #806d5e;
+  font-size: 10px;
+  margin-top: 10px;
+  text-align: center;
+}
+@media(max-width: 500px) {
+  .checkout-box { padding: 23px 18px; }
+  .checkout-box h2 { font-size: 32px; }
+}
+
 </style>
 </head>
 
@@ -939,6 +1055,40 @@ footer p {
 
 </div>
 <!-- ================= NOVEL DETAILS PAGE END ================= -->
+
+
+<!-- ================= CHECKOUT MODAL ================= -->
+<div class="checkout-overlay" id="checkoutOverlay">
+  <div class="checkout-box">
+    <button type="button" class="checkout-close" onclick="closeCheckout()" aria-label="Close checkout">×</button>
+    <h2>Complete Your Order</h2>
+    <p class="checkout-subtitle">Please enter your delivery details.</p>
+
+    <div class="checkout-items" id="checkoutItems"></div>
+    <div class="checkout-total">
+      <span>Total Amount</span>
+      <span id="checkoutTotal">Rs. 0</span>
+    </div>
+
+    <form class="checkout-form" id="checkoutForm">
+      <label for="customerName">Full Name</label>
+      <input type="text" id="customerName" name="customerName" placeholder="Enter your full name" required maxlength="100">
+
+      <label for="customerPhone">Phone Number</label>
+      <input type="tel" id="customerPhone" name="customerPhone" placeholder="03XXXXXXXXX" required maxlength="20">
+
+      <label for="customerAddress">Complete Delivery Address</label>
+      <textarea id="customerAddress" name="customerAddress" placeholder="House number, street, area, city..." required maxlength="500"></textarea>
+
+      <button type="submit" class="checkout-submit" id="checkoutSubmit">PLACE ORDER</button>
+      <p class="checkout-message" id="checkoutMessage" role="status"></p>
+      <p class="checkout-note">Payment method: Cash on Delivery</p>
+    </form>
+  </div>
+</div>
+<!-- ================= CHECKOUT MODAL END ================= -->
+
+
 
 
 <script>
@@ -1346,24 +1496,25 @@ function addToCart(book) {
 }
 
 function showCart() {
-
   if (cart.length === 0) {
     alert("Your cart is empty. Explore our books first!");
     return;
   }
 
-  const total = cart.reduce((sum, book) => sum + book.price, 0);
+  const total = cart.reduce((sum, book) => sum + Number(book.price), 0);
+  const itemsHTML = cart.map((book, index) =>
+    `<div>${index + 1}. ${book.title} — Rs. ${Number(book.price).toLocaleString("en-PK")}</div>`
+  ).join("");
 
-  const items = cart.map((book, index) =>
-    (index + 1) + ". " + book.title + " - Rs. " + book.price
-  ).join("\n");
+  document.getElementById("checkoutItems").innerHTML = itemsHTML;
+  document.getElementById("checkoutTotal").textContent =
+    "Rs. " + total.toLocaleString("en-PK");
+  document.getElementById("checkoutMessage").textContent = "";
+  document.getElementById("checkoutOverlay").classList.add("show");
+}
 
-  alert(
-    "YOUR VELORA CART\n\n" +
-    items +
-    "\n\nTotal: Rs. " + total.toLocaleString("en-PK") +
-    "\n\nOnline checkout is not connected yet."
-  );
+function closeCheckout() {
+  document.getElementById("checkoutOverlay").classList.remove("show");
 }
 
 function toggleMenu() {
@@ -1405,6 +1556,82 @@ document.getElementById("newsletterForm").addEventListener("submit", function(ev
   alert("Thank you for joining the VELORA Reading Club!");
   this.reset();
 });
+
+
+// ===== SEND CUSTOMER ORDER TO BACKEND =====
+// Local testing: backend must be running on http://localhost:5000.
+// When deployed, replace this with your Render backend URL.
+const API_BASE = "http://localhost:5000";
+
+document.getElementById("checkoutForm").addEventListener("submit", async function(event) {
+  event.preventDefault();
+
+  if (cart.length === 0) {
+    document.getElementById("checkoutMessage").textContent = "Your cart is empty.";
+    return;
+  }
+
+  const customerName = document.getElementById("customerName").value.trim();
+  const phone = document.getElementById("customerPhone").value.trim();
+  const address = document.getElementById("customerAddress").value.trim();
+  const submitButton = document.getElementById("checkoutSubmit");
+  const message = document.getElementById("checkoutMessage");
+
+  if (!customerName || !phone || !address) {
+    message.textContent = "Please complete all delivery fields.";
+    return;
+  }
+
+  const totalAmount = cart.reduce((sum, book) => sum + Number(book.price), 0);
+  const orderData = {
+    customerName: customerName,
+    items: cart.map(book => ({
+      book: { title: book.title },
+      price: Number(book.price),
+      quantity: 1
+    })),
+    phone: phone,
+    address: address,
+    totalAmount: totalAmount
+  };
+
+  submitButton.disabled = true;
+  submitButton.textContent = "PLACING ORDER...";
+  message.textContent = "Please wait while we submit your order.";
+
+  try {
+    const response = await fetch(`${API_BASE}/api/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderData)
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(result.message || "Order could not be placed. Please try again.");
+    }
+
+    alert("Thank you! Your VELORA order has been placed successfully.");
+    cart = [];
+    document.getElementById("cartCount").textContent = "0";
+    this.reset();
+    message.textContent = "";
+    closeCheckout();
+  } catch (error) {
+    console.error("Order submission error:", error);
+    message.textContent = error.message || "Unable to connect to the server. Please try again.";
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = "PLACE ORDER";
+  }
+});
+const API_BASE = "https://velora-backendd-cr95.onrender.com";
+// Close checkout when the dark background is clicked.
+document.getElementById("checkoutOverlay").addEventListener("click", function(event) {
+  if (event.target === this) closeCheckout();
+});
+
 
 // ===== START =====
 displayBooks();
